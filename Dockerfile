@@ -19,5 +19,5 @@ RUN chmod +x start.sh
 # Expose port
 EXPOSE 8000
 
-# Run the application with start script
-CMD ["./start.sh"]
+# Run the application with Python script
+CMD ["python", "run.py"]

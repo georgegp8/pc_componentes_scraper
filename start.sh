@@ -1,2 +1,2 @@
 #!/bin/sh
-exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+python -c "import os; import subprocess; subprocess.run(['uvicorn', 'main:app', '--host', '0.0.0.0', '--port', os.getenv('PORT', '8000')])"
