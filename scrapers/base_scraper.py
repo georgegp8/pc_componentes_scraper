@@ -142,12 +142,47 @@ class BaseScraper(ABC):
         Examples:
             "1.953,67" -> "1953.67" (European format with thousands separator)
             "1,953.67" -> "1953.67" (US format with thousands separator)
+            "1 326.49" -> "1326.49" (Space as thousands separator)
             "91,80" -> "91.80" (European format without thousands)
             "91.80" -> "91.80" (US format without thousands)
         """
-        # Remove spaces
-        price_str = price_str.replace(' ', '').replace('\xa0', '')
+        # Check if spaces are used as thousands separators (e.g., "1 326.49")
+        # This happens when there are spaces AND a dot/comma for decimals
+        if ' ' in price_str or '\xa0' in price_str:
+            # Count dots and commas before removing spaces
+            has_dot = '.' in price_str
+            has_comma = ',' in price_str
+            
+            # If there's a space followed by exactly 3 digits and then a decimal separator
+            # Example: "1 326.49" or "1 326,49"
+            if has_dot or has_comma:
+                # Remove spaces - they're thousands separators
+                price_str = price_str.replace(' ', '').replace('\xa0', '')
+                
+                # Now normalize the decimal separator
+                if has_comma and not has_dot:
+                    # "1326,49" -> "1326.49"
+                    price_str = price_str.replace(',', '.')
+                elif has_dot and not has_comma:
+                    # "1326.49" -> "1326.49" (already correct)
+                    pass
+                elif has_dot and has_comma:
+                    # Check which comes last
+                    dot_pos = price_str.rfind('.')
+                    comma_pos = price_str.rfind(',')
+                    if comma_pos > dot_pos:
+                        # "1.326,49" -> "1326.49"
+                        price_str = price_str.replace('.', '').replace(',', '.')
+                    else:
+                        # "1,326.49" -> "1326.49"
+                        price_str = price_str.replace(',', '')
+                
+                return price_str
+            else:
+                # Just spaces, no decimal - remove them
+                price_str = price_str.replace(' ', '').replace('\xa0', '')
         
+        # Original logic for other cases
         # Count dots and commas
         dot_count = price_str.count('.')
         comma_count = price_str.count(',')
@@ -210,8 +245,8 @@ class BaseScraper(ABC):
             prices['currency'] = 'PEN'
             return prices
         
-        # Pattern 2: $131.00 - S/445.40
-        pattern2 = r'\$\s*([\d,\.]+)\s*-\s*(?:S/|S\/)\s*([\d,\.]+)'
+        # Pattern 2: $131.00 - S/445.40 or $389.00 - S/1 326.49 (with space as thousands separator)
+        pattern2 = r'\$\s*([\d,\.]+)\s*-\s*(?:S/|S\/)\s*([\d,\.\s]+)'
         match = re.search(pattern2, price_text)
         
         if match:
