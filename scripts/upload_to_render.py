@@ -18,7 +18,7 @@ def get_local_products() -> List[Dict]:
     
     cursor.execute("""
         SELECT * FROM products 
-        ORDER BY store_name, component_type
+        ORDER BY store, component_type
     """)
     
     products = [dict(row) for row in cursor.fetchall()]
@@ -50,10 +50,14 @@ def upload_product(product: Dict) -> bool:
             timeout=30
         )
         
-        return response.status_code in [200, 201]
+        if response.status_code in [200, 201]:
+            return True
+        else:
+            print(f"   Status: {response.status_code}, Response: {response.text[:100]}")
+            return False
     
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"   Exception: {e}")
         return False
 
 def main():
@@ -66,7 +70,7 @@ def main():
     # Agrupar por tienda
     by_store = {}
     for p in products:
-        store = p["store_name"]
+        store = p["store"]
         by_store.setdefault(store, []).append(p)
     
     print(f"\n📊 Productos por tienda:")
