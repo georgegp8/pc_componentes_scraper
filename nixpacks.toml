@@ -1,0 +1,2 @@
+# Railway Deployment
+nixPacks.pkgs = ["python311"]
