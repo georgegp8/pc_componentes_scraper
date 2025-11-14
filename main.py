@@ -53,6 +53,18 @@ scrapers = {
 class ScrapeRequest(BaseModel):
     url: str = Field(..., description="URL de la página a scrapear")
     store_name: str = Field(..., description="Nombre de la tienda")
+
+class ProductCreate(BaseModel):
+    name: str
+    price: float
+    currency: str = "USD"
+    url: str
+    store_name: str
+    component_type: Optional[str] = None
+    image_url: Optional[str] = None
+    brand: Optional[str] = None
+    stock_status: Optional[str] = "available"
+    sku: Optional[str] = None
     
 class ComponentFilter(BaseModel):
     component_type: Optional[str] = None
@@ -189,6 +201,39 @@ async def get_products(
         "count": len(products),
         "products": products
     }
+
+@app.post("/api/products")
+async def create_product(product: ProductCreate):
+    """
+    Crea un nuevo producto en la base de datos
+    
+    - **name**: Nombre del producto
+    - **price**: Precio en USD
+    - **url**: URL del producto
+    - **store_name**: Nombre de la tienda
+    """
+    try:
+        product_dict = {
+            "name": product.name,
+            "price": product.price,
+            "currency": product.currency,
+            "url": product.url,
+            "store_name": product.store_name,
+            "component_type": product.component_type,
+            "image_url": product.image_url,
+            "brand": product.brand,
+            "stock_status": product.stock_status,
+            "sku": product.sku
+        }
+        
+        if db.insert_product(product_dict):
+            return {"status": "success", "message": "Producto creado"}
+        else:
+            raise HTTPException(status_code=409, detail="Producto duplicado (URL ya existe)")
+            
+    except Exception as e:
+        logger.error(f"Error creating product: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/products/{product_id}")
 async def get_product(product_id: int):
