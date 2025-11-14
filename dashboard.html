@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC Price Scraper - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            margin-left: 10px;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .product-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .product-card h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .product-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .product-info span:first-child {
+            color: #666;
+        }
+
+        .product-info span:last-child {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #667eea;
+            margin-top: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .comparison-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .best-price {
+            background: #d4edda !important;
+            font-weight: 600;
+        }
+
+        .icon {
+            display: inline-block;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖥️ PC Price Scraper</h1>
+            <p>Compara precios de componentes de PC entre diferentes tiendas</p>
+        </div>
+
+        <!-- Scraping Section -->
+        <div class="card">
+            <h2><span class="icon">🔍</span> Scrapear Tienda</h2>
+            <div class="form-group">
+                <label for="scrapeUrl">URL de la página</label>
+                <input type="text" id="scrapeUrl" placeholder="https://sercoplus.com/765-cpu-1700-12va-generacion">
+            </div>
+            <div class="form-group">
+                <label for="storeName">Nombre de la tienda</label>
+                <input type="text" id="storeName" placeholder="SercoPlus">
+            </div>
+            <button class="btn" onclick="scrapeStore()">🚀 Iniciar Scraping</button>
+            <div id="scrapeResult" class="result"></div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="card">
+            <h2><span class="icon">🔎</span> Buscar Productos</h2>
+            <div class="form-group">
+                <label for="searchQuery">Buscar por nombre</label>
+                <input type="text" id="searchQuery" placeholder="Intel Core i7">
+            </div>
+            <button class="btn" onclick="searchProducts()">🔍 Buscar</button>
+            <button class="btn btn-secondary" onclick="loadAllProducts()">📦 Ver Todos</button>
+            <div id="searchResults"></div>
+        </div>
+
+        <!-- Compare Section -->
+        <div class="card">
+            <h2><span class="icon">⚖️</span> Comparar Precios</h2>
+            <div class="form-group">
+                <label for="compareProduct">Nombre del producto</label>
+                <input type="text" id="compareProduct" placeholder="PROCESADOR INTEL CORE I7-12700F">
+            </div>
+            <button class="btn" onclick="comparePrice()">💰 Comparar</button>
+            <div id="compareResult"></div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="card">
+            <h2><span class="icon">📊</span> Estadísticas</h2>
+            <button class="btn" onclick="loadStats()">📈 Cargar Estadísticas</button>
+            <div id="statsResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+
+        async function scrapeStore() {
+            const url = document.getElementById('scrapeUrl').value;
+            const store = document.getElementById('storeName').value;
+            const resultDiv = document.getElementById('scrapeResult');
+
+            if (!url || !store) {
+                showResult(resultDiv, 'Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Scrapeando...</div>';
+            resultDiv.style.display = 'block';
+
+            try {
+                const response = await fetch(`${API_URL}/api/scrape`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, store_name: store })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(resultDiv, 
+                        `✅ ${data.message}<br>💾 Guardados: ${data.saved} productos`, 
+                        'success'
+                    );
+                } else {
+                    showResult(resultDiv, `❌ Error: ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ Error de conexión: ${error.message}`, 'error');
+            }
+        }
+
+        async function searchProducts() {
+            const query = document.getElementById('searchQuery').value;
+            const resultsDiv = document.getElementById('searchResults');
+
+            if (!query) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                displayProducts(data.products, resultsDiv);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadAllProducts() {
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Cargando...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/products?limit=20`);
+                const data = await response.json();
+
+                displayProducts(data.products, resultsDiv);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function comparePrice() {
+            const productName = document.getElementById('compareProduct').value;
+            const resultDiv = document.getElementById('compareResult');
+
+            if (!productName) {
+                showResult(resultDiv, 'Por favor ingresa el nombre del producto', 'error');
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Comparando...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/compare/${encodeURIComponent(productName)}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayComparison(data, resultDiv);
+                } else {
+                    showResult(resultDiv, `❌ ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadStats() {
+            const resultsDiv = document.getElementById('statsResult');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Cargando estadísticas...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/stats`);
+                const data = await response.json();
+
+                displayStats(data, resultsDiv);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function displayProducts(products, container) {
+            if (!products || products.length === 0) {
+                container.innerHTML = '<div class="result error">No se encontraron productos</div>';
+                return;
+            }
+
+            let html = '<div class="product-grid">';
+            products.forEach(product => {
+                html += `
+                    <div class="product-card">
+                        <h3>${product.name}</h3>
+                        <div class="product-info">
+                            <span>Marca:</span>
+                            <span>${product.brand || 'N/A'}</span>
+                        </div>
+                        <div class="product-info">
+                            <span>Tienda:</span>
+                            <span>${product.store}</span>
+                        </div>
+                        <div class="product-info">
+                            <span>Stock:</span>
+                            <span>${product.stock}</span>
+                        </div>
+                        <div class="price">$${product.price_usd.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function displayComparison(data, container) {
+            let html = `
+                <div class="result success" style="display: block;">
+                    <h3 style="margin-bottom: 15px;">${data.product_name}</h3>
+                    <p><strong>💰 Diferencia de precio:</strong> $${data.price_difference_usd.toFixed(2)}</p>
+                    <p><strong>💡 Ahorro potencial:</strong> ${data.savings_percentage}%</p>
+                </div>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Tienda</th>
+                            <th>Precio USD</th>
+                            <th>Precio Local</th>
+                            <th>Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.prices.forEach((price, index) => {
+                const isBest = index === 0;
+                html += `
+                    <tr class="${isBest ? 'best-price' : ''}">
+                        <td>${price.store} ${isBest ? '🏆' : ''}</td>
+                        <td>$${price.price_usd.toFixed(2)}</td>
+                        <td>${price.price_local ? price.price_local.toFixed(2) : 'N/A'}</td>
+                        <td>${price.stock}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function displayStats(data, container) {
+            let html = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>${data.total_products}</h3>
+                        <p>Total Productos</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>$${data.price_statistics.min.toFixed(2)}</h3>
+                        <p>Precio Mínimo</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>$${data.price_statistics.max.toFixed(2)}</h3>
+                        <p>Precio Máximo</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>$${data.price_statistics.avg.toFixed(2)}</h3>
+                        <p>Precio Promedio</p>
+                    </div>
+                </div>
+            `;
+
+            if (data.products_by_store.length > 0) {
+                html += '<h3 style="margin-top: 30px; margin-bottom: 15px;">Productos por Tienda</h3>';
+                html += '<table class="comparison-table"><thead><tr><th>Tienda</th><th>Productos</th></tr></thead><tbody>';
+                data.products_by_store.forEach(store => {
+                    html += `<tr><td>${store.store}</td><td>${store.count}</td></tr>`;
+                });
+                html += '</tbody></table>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function showResult(element, message, type) {
+            element.className = `result ${type}`;
+            element.innerHTML = message;
+            element.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
