@@ -143,46 +143,13 @@ class BaseScraper(ABC):
             "1.953,67" -> "1953.67" (European format with thousands separator)
             "1,953.67" -> "1953.67" (US format with thousands separator)
             "1 326.49" -> "1326.49" (Space as thousands separator)
+            "3 270.00" -> "3270.00" (Space as thousands separator)
             "91,80" -> "91.80" (European format without thousands)
             "91.80" -> "91.80" (US format without thousands)
         """
-        # Check if spaces are used as thousands separators (e.g., "1 326.49")
-        # This happens when there are spaces AND a dot/comma for decimals
-        if ' ' in price_str or '\xa0' in price_str:
-            # Count dots and commas before removing spaces
-            has_dot = '.' in price_str
-            has_comma = ',' in price_str
-            
-            # If there's a space followed by exactly 3 digits and then a decimal separator
-            # Example: "1 326.49" or "1 326,49"
-            if has_dot or has_comma:
-                # Remove spaces - they're thousands separators
-                price_str = price_str.replace(' ', '').replace('\xa0', '')
-                
-                # Now normalize the decimal separator
-                if has_comma and not has_dot:
-                    # "1326,49" -> "1326.49"
-                    price_str = price_str.replace(',', '.')
-                elif has_dot and not has_comma:
-                    # "1326.49" -> "1326.49" (already correct)
-                    pass
-                elif has_dot and has_comma:
-                    # Check which comes last
-                    dot_pos = price_str.rfind('.')
-                    comma_pos = price_str.rfind(',')
-                    if comma_pos > dot_pos:
-                        # "1.326,49" -> "1326.49"
-                        price_str = price_str.replace('.', '').replace(',', '.')
-                    else:
-                        # "1,326.49" -> "1326.49"
-                        price_str = price_str.replace(',', '')
-                
-                return price_str
-            else:
-                # Just spaces, no decimal - remove them
-                price_str = price_str.replace(' ', '').replace('\xa0', '')
+        # Remove all types of spaces first (regular space, non-breaking space, etc.)
+        price_str = price_str.replace(' ', '').replace('\xa0', '').replace('\u00a0', '')
         
-        # Original logic for other cases
         # Count dots and commas
         dot_count = price_str.count('.')
         comma_count = price_str.count(',')
@@ -245,8 +212,8 @@ class BaseScraper(ABC):
             prices['currency'] = 'PEN'
             return prices
         
-        # Pattern 2: $131.00 - S/445.40 or $389.00 - S/1 326.49 (with space as thousands separator)
-        pattern2 = r'\$\s*([\d,\.]+)\s*-\s*(?:S/|S\/)\s*([\d,\.\s]+)'
+        # Pattern 2: $131.00 - S/445.40 or $389.00 - S/1 326.49 or $3 270.00 - S/11 150.70
+        pattern2 = r'\$\s*([\d,\.\s]+?)\s*-\s*(?:S/|S\/)\s*([\d,\.\s]+)'
         match = re.search(pattern2, price_text)
         
         if match:
@@ -335,16 +302,31 @@ class BaseScraper(ABC):
             'Seagate', 'Crucial', 'G.Skill', 'HyperX', 'Razer',
             'Logitech', 'Cooler Master', 'NZXT', 'Thermaltake',
             'EVGA', 'Zotac', 'Sapphire', 'XFX', 'PNY', 'Palit',
-            'Adata', 'Patriot', 'Team', 'Lexar'
+            'Adata', 'Patriot', 'Team', 'Lexar', 'DeepCool', 'Deepcool',
+            'XPG', 'Galax', 'KFA2', 'Gainward', 'Inno3D',
+            'Colorful', 'Powercolor', 'Biostar', 'ECS', 'Gambyte'
         ]
         
         name_upper = name.upper()
-        for brand in common_brands:
+        
+        # Check for brands in order (longer names first to avoid partial matches)
+        sorted_brands = sorted(common_brands, key=len, reverse=True)
+        for brand in sorted_brands:
             if brand.upper() in name_upper:
                 return brand
         
-        # If no match, return first word
-        return name.split()[0] if name else 'Unknown'
+        # Skip common non-brand words
+        skip_words = ['TARJETA', 'DE', 'VIDEO', 'PROCESADOR', 'MEMORIA', 'RAM', 
+                     'PLACA', 'MADRE', 'CASE', 'GABINETE', 'FUENTE', 'DISCO',
+                     'SSD', 'HDD', 'MONITOR', 'TECLADO', 'MOUSE', 'SOPORTE']
+        
+        words = name.split()
+        for word in words:
+            word_upper = word.upper().strip()
+            if word_upper and word_upper not in skip_words and len(word_upper) > 2:
+                return word
+        
+        return 'Unknown'
     
     def identify_component_type(self, name: str, category: str = '') -> str:
         """
@@ -359,16 +341,25 @@ class BaseScraper(ABC):
         """
         text = (name + ' ' + category).lower()
         
+        # Check for exclusions first (things that shouldn't be in certain categories)
+        # Exclude cases/gabinetes from tarjeta_grafica
+        if any(word in text for word in ['case s/', 'case sin', 'gabinete s/']):
+            return 'gabinete'
+        
+        # Exclude accessories/supports from main categories (check before GPU keywords)
+        if any(word in text for word in ['soporte para', 'soporte pcie', 'bracket', 'riser', 'extensor']):
+            return 'accesorio'
+        
         type_keywords = {
             'procesador': ['procesador', 'processor', 'cpu', 'core i', 'ryzen', 'pentium', 'celeron', 'athlon'],
-            'tarjeta_grafica': ['tarjeta grafica', 'tarjeta gráfica', 'gpu', 'geforce', 'radeon', 'rtx', 'gtx', 'video card'],
-            'memoria_ram': ['memoria', 'ram', 'ddr', 'dimm', 'memory'],
-            'almacenamiento': ['ssd', 'hdd', 'nvme', 'disco', 'storage', 'm.2', 'sata'],
-            'placa_madre': ['motherboard', 'placa madre', 'mainboard', 'board'],
-            'fuente': ['fuente', 'psu', 'power supply'],
-            'gabinete': ['gabinete', 'case', 'caja', 'chasis'],
-            'refrigeracion': ['cooler', 'refrigeracion', 'refrigeración', 'ventilador', 'fan', 'liquid cooling'],
-            'monitor': ['monitor', 'display', 'pantalla', 'screen'],
+            'tarjeta_grafica': ['tarjeta de video', 'tarjeta grafica', 'tarjeta gráfica', 'gpu ', 'geforce', 'radeon', 'rtx', 'gtx', 'video card'],
+            'memoria_ram': ['memoria ram', 'memoria ddr', 'ram ddr', 'dimm', 'sodimm'],
+            'almacenamiento': ['ssd', 'hdd', 'nvme', 'disco duro', 'storage', 'm.2', 'sata'],
+            'placa_madre': ['motherboard', 'placa madre', 'mainboard', 'placa base'],
+            'fuente': ['fuente de poder', 'fuente poder', 'psu', 'power supply'],
+            'gabinete': ['gabinete', 'case', 'caja pc', 'chasis', 'carcasa'],
+            'refrigeracion': ['cooler', 'refrigeracion', 'refrigeración', 'ventilador', 'fan', 'liquid cooling', 'water cooling'],
+            'monitor': ['monitor', 'display', 'pantalla'],
             'teclado': ['teclado', 'keyboard'],
             'mouse': ['mouse', 'ratón', 'raton'],
             'auriculares': ['auricular', 'headset', 'headphone']
