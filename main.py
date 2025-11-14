@@ -12,7 +12,11 @@ from datetime import datetime
 import uvicorn
 import logging
 
-from database import Database\nfrom scrapers import SercoPlusScraper, PCImpactoScraper, ComputerShopScraper\n# from product_matcher import ProductMatcher  # Módulo no utilizado actualmente\n# from scheduler import ScrapingScheduler, STORE_URLS  # Comentado temporalmente\nfrom config import config
+from database import Database
+from scrapers import SercoPlusScraper, PCImpactoScraper, ComputerShopScraper
+# from product_matcher import ProductMatcher  # Módulo no utilizado actualmente
+# from scheduler import ScrapingScheduler, STORE_URLS  # Comentado temporalmente
+from config import config
 
 app = FastAPI(
     title="PC Price Scraper API",
