@@ -213,24 +213,28 @@ async def create_product(product: ProductCreate):
     - **store_name**: Nombre de la tienda
     """
     try:
+        # Mapear campos de la API a la BD
         product_dict = {
             "name": product.name,
-            "price": product.price,
+            "price_usd": product.price,  # API usa 'price', BD usa 'price_usd'
             "currency": product.currency,
-            "url": product.url,
-            "store_name": product.store_name,
+            "source_url": product.url,  # API usa 'url', BD usa 'source_url'
+            "store": product.store_name,  # API usa 'store_name', BD usa 'store'
             "component_type": product.component_type,
             "image_url": product.image_url,
             "brand": product.brand,
-            "stock_status": product.stock_status,
-            "sku": product.sku
+            "stock": product.stock_status,  # API usa 'stock_status', BD usa 'stock'
+            "sku": product.sku,
+            "last_scraped": datetime.now().isoformat()
         }
         
         if db.insert_product(product_dict):
-            return {"status": "success", "message": "Producto creado"}
+            return {"status": "success", "message": "Producto creado o actualizado"}
         else:
-            raise HTTPException(status_code=409, detail="Producto duplicado (URL ya existe)")
+            raise HTTPException(status_code=500, detail="Error al insertar producto")
             
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error creating product: {e}")
         raise HTTPException(status_code=500, detail=str(e))
