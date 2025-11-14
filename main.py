@@ -111,13 +111,20 @@ async def favicon():
 @app.post("/api/scrape")
 async def scrape_store(request: ScrapeRequest, background_tasks: BackgroundTasks):
     """
-    """\n    Scrapea productos de una URL específica\n    \n    - **url**: URL de la página a scrapear\n    - **store_name**: Nombre de la tienda (SercoPlus, PCImpacto, o ComputerShop)\n    """
+    Scrapea productos de una URL específica
+    
+    - **url**: URL de la página a scrapear
+    - **store_name**: Nombre de la tienda (SercoPlus, PCImpacto, o ComputerShop)
     """
     try:
         # Get appropriate scraper
         scraper = scrapers.get(request.store_name)
         
-        if not scraper:\n            raise HTTPException(\n                status_code=400, \n                detail=f"Tienda no soportada: {request.store_name}. Use: SercoPlus, PCImpacto, o ComputerShop"\n            )
+        if not scraper:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Tienda no soportada: {request.store_name}. Use: SercoPlus, PCImpacto, o ComputerShop"
+            )
         
         # Scrape products
         logger.info(f"Scraping {request.store_name}: {request.url}")
