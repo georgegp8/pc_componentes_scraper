@@ -64,8 +64,9 @@ def main():
         print(f"  Con imagen: {with_image}/{total_products} ({with_image/total_products*100:.1f}%)")
         print(f"  Con stock: {with_stock}/{total_products} ({with_stock/total_products*100:.1f}%)")
         
-        # Guardar resultados
-        output_file = 'products.json'
+        # Guardar resultados en el directorio del scraper
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        output_file = os.path.join(script_dir, 'products.json')
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump({
                 'timestamp': datetime.now().isoformat(),
