@@ -1,13 +1,14 @@
 """
-Script para subir productos de la base de datos local a Render
+Script para subir productos de la base de datos local a una API remota
+Funciona con cualquier API compatible (Render, PythonAnywhere, etc.)
 """
 import sqlite3
 import requests
 import time
 from typing import List, Dict
 
-# Configuración
-RENDER_API = "https://pc-componentes-scraper.onrender.com"
+# Configuración - Cambiar según tu API remota
+API_URL = "https://pc-componentes-scraper.onrender.com"  # Cambiar a tu URL
 LOCAL_DB = "pc_prices.db"
 
 def get_local_products() -> List[Dict]:
@@ -28,7 +29,7 @@ def get_local_products() -> List[Dict]:
     return products
 
 def upload_product(product: Dict) -> bool:
-    """Sube un producto a Render usando el endpoint POST /api/products"""
+    """Sube un producto a la API remota usando el endpoint POST /api/products"""
     try:
         # Mapear campos de BD a API
         payload = {
@@ -45,7 +46,7 @@ def upload_product(product: Dict) -> bool:
         }
         
         response = requests.post(
-            f"{RENDER_API}/api/products",
+            f"{API_URL}/api/products",
             json=payload,
             timeout=30
         )
@@ -61,8 +62,8 @@ def upload_product(product: Dict) -> bool:
         return False
 
 def main():
-    print("🚀 Iniciando carga de productos a Render...")
-    print(f"🎯 Destino: {RENDER_API}")
+    print("🚀 Iniciando carga de productos a API remota...")
+    print(f"🎯 Destino: {API_URL}")
     
     # Obtener productos locales
     products = get_local_products()
